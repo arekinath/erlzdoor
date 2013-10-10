@@ -1,0 +1,6 @@
+{application, zdoor,
+ [
+ 	{description, "libzdoor for erlang"},
+ 	{vsn, "1.0"},
+ 	{mod, {zdoor_app, []}}
+ ]}.
