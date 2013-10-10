@@ -3,11 +3,13 @@ A binding for SmartOS libzdoor for erlang.
 
 ## How it works
 
-This is a NIF binding that defers most of its work off onto a worker thread (spawned at startup). The worker thread handles requests to open/close a door.
+This is a NIF binding that defers most of its work off onto a worker thread (spawned at startup). The worker thread handles requests to open/close a door. When a door is opened, the process that called zdoor:open/2 "owns" the door from then on.
 
-Then, the door spawns its own threads behind the scenes to handle actual requests. We convert these into Erlang messages (while the handler thread is blocked on a wait condition).
+The opened door spawns its own threads behind the scenes to handle actual requests (these are injected by the kernel). We convert these into Erlang messages (while the handler thread is blocked on a wait condition), and send them to the owner process.
 
-Finally, Erlang calls into the zdoor:reply/2 NIF and this unlocks the door server thread and returns the given reply value.
+Finally, the owner process calls into the zdoor:reply/2 NIF and this unlocks the door server thread and returns the given reply value back to the door.
+
+(currently the owner process of a door cannot be changed once opened, and only one request/reply sequence can be in progress at once)
 
 ## Example
 
