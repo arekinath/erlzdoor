@@ -1,3 +1,33 @@
+/*
+%%
+%% libzdoor erlang binding
+%%
+%% Copyright (c) 2013, The University of Queensland
+%% Author: Alex Wilson <alex@uq.edu.au>
+%%
+%% Redistribution and use in source and binary forms, with or without
+%% modification, are permitted provided that the following conditions are met:
+%%
+%%  * Redistributions of source code must retain the above copyright notice,
+%%    this list of conditions and the following disclaimer.
+%%  * Redistributions in binary form must reproduce the above copyright notice,
+%%    this list of conditions and the following disclaimer in the documentation
+%%    and/or other materials provided with the distribution.
+%%
+%% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+%% AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+%% IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+%% ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+%% LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+%% CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED  TO, PROCUREMENT OF
+%% SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR  BUSINESS
+%% INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+%% CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+%% ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+%% POSSIBILITY OF SUCH DAMAGE.
+%%
+*/
+
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
@@ -10,14 +40,16 @@
 
 #include "erl_nif.h"
 
+/* a 'session' is an open door that can receive requests */
 struct erl_zdoor_session {
 	struct erl_zdoor_session *next;
 
-	int busy;
 	char *zonename;
 	char *service;
 	ErlNifPid owner;
 
+	/* busy if the session is expecting a reply */
+	int busy;
 	ErlNifMutex *lock;
 	ErlNifCond *repcond;
 	/* allocate rep with plain malloc -- libzdoor will use free */
@@ -26,6 +58,7 @@ struct erl_zdoor_session {
 	int replen;
 };
 
+/* a job to be performed in the job thread */
 typedef enum { ACT_OPEN, ACT_CLOSE, ACT_QUIT } jobaction_t;
 struct erl_zdoor_job {
 	struct erl_zdoor_job *next;
@@ -34,6 +67,7 @@ struct erl_zdoor_job {
 	ErlNifPid owner;
 };
 
+/* globals */
 static struct {
 	struct erl_zdoor_session *slist;
 	ErlNifRWLock *slock;
@@ -82,6 +116,7 @@ erl_zdoor_callback(struct zdoor_cookie *cookie, char *argp, size_t argp_sz)
 	int sid = 0;
 	ErlNifEnv *env = enif_alloc_env();
 
+	/* we kept the session in the biscuit */
 	sess = (struct erl_zdoor_session *)cookie->zdc_biscuit;
 
 	enif_mutex_lock(sess->lock);
@@ -90,6 +125,7 @@ erl_zdoor_callback(struct zdoor_cookie *cookie, char *argp, size_t argp_sz)
 	}
 	sess->busy++;
 
+	/* make the request into a binary term to put it into enif_send() later */
 	ErlNifBinary bin;
 	enif_alloc_binary(argp_sz, &bin);
 	memcpy(bin.data, argp, argp_sz);
@@ -102,6 +138,7 @@ erl_zdoor_callback(struct zdoor_cookie *cookie, char *argp, size_t argp_sz)
 	enif_mutex_unlock(erl_zdoor.sidlock);
 	sess->repsid = sid;
 
+	/* send a message back to the session owner */
 	enif_send(NULL, &sess->owner, env,
 		enif_make_tuple3(env,
 			enif_make_atom(env, "zdoor"),
@@ -124,6 +161,7 @@ erl_zdoor_callback(struct zdoor_cookie *cookie, char *argp, size_t argp_sz)
 	return res;
 }
 
+/* the async job thread that handles opening/closing of doors */
 void *
 job_thread(void *arg)
 {
@@ -409,7 +447,6 @@ static ErlNifFunc nif_funcs[] =
 	{"sess_reply", 2, sess_reply},
 	{"job_open", 2, job_open},
 	{"job_close", 2, job_close}
-	/*{"enc_varbind", 1, enc_varbind}*/
 };
 
 ERL_NIF_INIT(zdoor, nif_funcs, load_cb, NULL, NULL, unload_cb)
