@@ -28,9 +28,14 @@
 
 -module(zdoor).
 
--export([open/2, close/2, reply/2]).
--export([sess_reply/2, job_open/2, job_close/2]).
+-export_type([req_ref/0]).
+-opaque req_ref() :: -1.
+
+-export([open/2, close/2, reply/2, req_info/1]).
+-export([job_open/2, job_close/2]).
 -on_load(init/0).
+
+-include("zdoor.hrl").
 
 init() ->
 	SoName = case code:priv_dir(erlzdoor) of
@@ -46,15 +51,22 @@ init() ->
     end,
 	ok = erlang:load_nif(SoName, 0).
 
-sess_reply(_Sid, _Bin) ->
+%% @doc Get information about a pending request
+-spec req_info(Req :: req_ref()) -> #zdoor_req{}.
+req_info(_Req) ->
 	{error, badnif}.
 
-reply(Sid, Bin) ->
-	?MODULE:sess_reply(Sid, Bin).
+%% @doc Reply to a zdoor request
+-spec reply(Req :: req_ref(), ReplyData :: binary()) -> ok | {error, term()}.
+reply(_Req, _Bin) ->
+	{error, badnif}.
 
+%% @internal
 job_open(_Zone, _Service) ->
 	{error, badnif}.
 
+%% @doc Open a new zone door
+-spec open(Zone :: string(), Service :: string()) -> ok | {error, term()}.
 open(Zone, Service) ->
 	case ?MODULE:job_open(Zone, Service) of
 		ok ->
@@ -65,9 +77,12 @@ open(Zone, Service) ->
 		Other -> Other
 	end.
 
+%% @internal
 job_close(_Zone, _Service) ->
 	{error, badnif}.
 
+%% @doc Close a zone door
+-spec close(Zone :: string(), Service :: string()) -> ok | {error, term()}.
 close(Zone, Service) ->
 	case ?MODULE:job_close(Zone, Service) of
 		ok ->
