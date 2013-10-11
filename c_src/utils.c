@@ -94,5 +94,4 @@ req_remove(struct door *d, struct req *r)
 	}
 	if (rb)
 		rb->next = r->next;
-	enif_rwlock_rwunlock(d->rlock);
 }
