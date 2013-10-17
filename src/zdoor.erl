@@ -38,18 +38,15 @@
 -include("zdoor.hrl").
 
 init() ->
-	SoName = case code:priv_dir(erlzdoor) of
-	    {error, bad_name} ->
-	        case filelib:is_dir(filename:join(["..", priv])) of
-	        true ->
-	            filename:join(["..", priv, ?MODULE]);
-	        false ->
-	            filename:join([priv, ?MODULE])
-	        end;
-	    Dir ->
-	        filename:join(Dir, ?MODULE)
-    end,
-	ok = erlang:load_nif(SoName, 0).
+    PrivDir = case code:priv_dir(?MODULE) of
+                  {error, _} ->
+                      EbinDir = filename:dirname(code:which(?MODULE)),
+                      AppPath = filename:dirname(EbinDir),
+                      filename:join(AppPath, "priv");
+                  Path ->
+                      Path
+              end,
+    erlang:load_nif(filename:join(PrivDir, ?MODULE), 0).
 
 %% @doc Get information about a pending request
 -spec req_info(Req :: req_ref()) -> #zdoor_req{}.
