@@ -54,8 +54,14 @@ req_info(_Req) ->
 	{error, badnif}.
 
 %% @doc Reply to a zdoor request
--spec reply(Req :: req_ref(), ReplyData :: binary()) -> ok | {error, term()}.
-reply(_Req, _Bin) ->
+-spec reply(Req :: req_ref(), ReplyData :: string() | binary()) -> ok | {error, term()}.
+reply(Req, Bin) when is_list(Bin) ->
+    reply_job(Req, iolist_to_binary(Bin));
+reply(Req, Bin) ->
+    reply_job(Req, Bin).
+
+
+reply_job(_Req, _Bin) ->
 	{error, badnif}.
 
 %% @internal
@@ -63,7 +69,13 @@ job_open(_Zone, _Service) ->
 	{error, badnif}.
 
 %% @doc Open a new zone door
--spec open(Zone :: string(), Service :: string()) -> ok | {error, term()}.
+-spec open(Zone :: string()|binary(), Service :: string()|binary()) -> ok | {error, term()}.
+open(Zone, Service) when is_binary(Zone) ->
+    open(binary_to_list(Zone), Service);
+
+open(Zone, Service) when is_binary(Service) ->
+    open(Zone, binary_to_list(Service));
+
 open(Zone, Service) ->
 	case ?MODULE:job_open(Zone, Service) of
 		ok ->
@@ -79,7 +91,13 @@ job_close(_Zone, _Service) ->
 	{error, badnif}.
 
 %% @doc Close a zone door
--spec close(Zone :: string(), Service :: string()) -> ok | {error, term()}.
+-spec close(Zone :: string()|binary(), Service :: string()|binary()) -> ok | {error, term()}.
+close(Zone, Service) when is_binary(Zone) ->
+    close(binary_to_list(Zone), Service);
+
+close(Zone, Service) when is_binary(Service) ->
+    close(Zone, binary_to_list(Service));
+
 close(Zone, Service) ->
 	case ?MODULE:job_close(Zone, Service) of
 		ok ->
