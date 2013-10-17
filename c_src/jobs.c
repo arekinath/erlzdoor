@@ -197,11 +197,15 @@ job_thread(void *arg)
 					enif_free_env(env);
 				} else {
 					struct door *d = gbl.dlist;
-					for (; d; d = d->next) {
-						if (d->next == j->door) break;
+					if (d == j->door) {
+						gbl.dlist = j->door->next;
+					} else {
+						for (; d; d = d->next) {
+							if (d->next == j->door) break;
+						}
+						if (d)
+							d->next = j->door->next;
 					}
-					if (d)
-						d->next = j->door->next;
 					enif_rwlock_rwunlock(gbl.dlock);
 
 					zdoor_close(zhandle, j->door->zonename, j->door->service);

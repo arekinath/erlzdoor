@@ -39,6 +39,7 @@ door_alloc(void)
 	return d;
 }
 
+/* needs d->rlock */
 void
 door_free(struct door *d)
 {
@@ -46,6 +47,7 @@ door_free(struct door *d)
 		enif_free(d->zonename);
 	if (d->service)
 		enif_free(d->service);
+	enif_rwlock_rwunlock(d->rlock);
 	enif_rwlock_destroy(d->rlock);
 	enif_free(d);
 }
