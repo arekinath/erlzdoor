@@ -20,12 +20,12 @@ Finally, the owner process calls into the zdoor:reply/2 NIF and this unlocks the
           Data = binary:part(Bin, {0, byte_size(Bin)-1}),
           Info = zdoor:req_info(Req),
           io:format("data = ~p\ndoor = ~p\n", [Data, Info]),
-          zdoor:reply(Req, <<"1\n">>),
+          ok = zdoor:reply(Req, <<"1\n">>),
           do_door()
       end.
 
     main([Zone]) ->
-      zdoor:open(Zone, "_joyent_sshd_key_is_authorized"),
+      ok = zdoor:open(Zone, "_joyent_sshd_key_is_authorized"),
       do_door().
 
 Running this example script (we'll call it 'test.es'):
