@@ -91,9 +91,13 @@ void
 req_remove(struct door *d, struct req *r)
 {
 	struct req *rb = d->rlist;
-	for (; rb; rb = rb->next) {
-		if (rb->next == r) break;
+	if (rb == r) {
+		d->rlist = r->next;
+	} else {
+		for (; rb; rb = rb->next) {
+			if (rb->next == r) break;
+		}
+		if (rb)
+			rb->next = r->next;
 	}
-	if (rb)
-		rb->next = r->next;
 }
