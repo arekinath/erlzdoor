@@ -32,7 +32,7 @@
 -opaque req_ref() :: -1.
 
 -export([open/2, close/2, reply/2, req_info/1]).
--export([job_open/2, job_close/2]).
+-export([req_reply/2, job_open/2, job_close/2]).
 -on_load(init/0).
 
 -include("zdoor.hrl").
@@ -56,12 +56,11 @@ req_info(_Req) ->
 %% @doc Reply to a zdoor request
 -spec reply(Req :: req_ref(), ReplyData :: string() | binary()) -> ok | {error, term()}.
 reply(Req, Bin) when is_list(Bin) ->
-    reply_job(Req, iolist_to_binary(Bin));
+    req_reply(Req, iolist_to_binary(Bin));
 reply(Req, Bin) ->
-    reply_job(Req, Bin).
+    req_reply(Req, Bin).
 
-
-reply_job(_Req, _Bin) ->
+req_reply(_Req, _Bin) ->
 	{error, badnif}.
 
 %% @internal

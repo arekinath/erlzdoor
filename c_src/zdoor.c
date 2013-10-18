@@ -57,7 +57,7 @@ unload_cb(ErlNifEnv *env, void *priv_data)
 }
 
 static ERL_NIF_TERM
-reply(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+req_reply(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct req *req;
 	ErlNifBinary repbin;
@@ -175,7 +175,7 @@ job_close(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 static ErlNifFunc nif_funcs[] =
 {
-	{"reply", 2, reply},
+	{"req_reply", 2, req_reply},
 	{"req_info", 1, req_info},
 	{"job_open", 2, job_open},
 	{"job_close", 2, job_close}
