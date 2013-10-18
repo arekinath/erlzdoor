@@ -73,8 +73,8 @@ req_reply(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	memcpy(req->rep, repbin.data, repbin.size);
 	req->replen = repbin.size;
 
-	enif_mutex_unlock(req->lock);
 	enif_cond_signal(req->cond);
+	enif_mutex_unlock(req->lock);
 
 	return enif_make_atom(env, "ok");
 }

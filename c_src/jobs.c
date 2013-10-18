@@ -57,8 +57,8 @@ job_insert(struct job *j)
 	if (gbl.jlist)
 		j->next = gbl.jlist;
 	gbl.jlist = j;
-	enif_mutex_unlock(gbl.jlock);
 	enif_cond_signal(gbl.jcond);
+	enif_mutex_unlock(gbl.jlock);
 }
 
 static struct zdoor_result *
