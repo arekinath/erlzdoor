@@ -156,6 +156,7 @@ job_close(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (d && found) {
 		struct job *j = job_alloc(ACT_CLOSE);
+		j->door = d;
 		enif_self(env, &j->owner);
 
 		enif_rwlock_runlock(gbl.dlock);
