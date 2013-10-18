@@ -136,12 +136,15 @@ job_thread(void *arg)
 	enif_mutex_lock(gbl.jlock);
 
 	while (cont) {
-		struct job *j, *oj;
+		struct job *j;
 		while (!gbl.jlist)
 			enif_cond_wait(gbl.jcond, gbl.jlock);
 
 		j = gbl.jlist;
 		while (j) {
+			gbl.jlist = j->next;
+			enif_mutex_unlock(gbl.jlock);
+
 			if (j->action == ACT_OPEN) {
 				enif_rwlock_rwlock(gbl.dlock);
 				j->door->next = NULL;
@@ -223,12 +226,11 @@ job_thread(void *arg)
 				cont = 0;
 			}
 
-			oj = j;
-			j = j->next;
-			enif_free(oj);
-		}
+			enif_free(j);
 
-		gbl.jlist = NULL;
+			enif_mutex_lock(gbl.jlock);
+			j = gbl.jlist;
+		}
 	}
 
 	enif_mutex_unlock(gbl.jlock);
